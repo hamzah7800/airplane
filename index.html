@@ -9,6 +9,16 @@
 <body>
   <canvas id="gameCanvas"></canvas>
   <div id="joystick"><div id="stick"></div></div>
+  <button id="shootButton">Shoot</button>
+  <div id="ui">
+    <div id="healthBar"><div id="health"></div></div>
+    <div id="scoreText">Score: 0</div>
+    <div id="reloadText">Reloading...</div>
+  </div>
+  <div id="gameOverScreen">
+    <h1>Game Over</h1>
+    <button onclick="restartGame()">Restart</button>
+  </div>
   <script src="game.js"></script>
 </body>
 </html>
