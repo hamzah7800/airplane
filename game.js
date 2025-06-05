@@ -18,16 +18,9 @@ let bullets = [];
 let enemies = [];
 let score = 0;
 
-// Handle tap to shoot
-canvas.addEventListener("touchstart", (e) => {
-  if (e.target.closest("#joystick")) return;
-  bullets.push({
-    x: plane.x + Math.cos(plane.angle) * 20,
-    y: plane.y + Math.sin(plane.angle) * 20,
-    angle: plane.angle,
-    speed: 8,
-  });
-});
+// Load custom airplane image
+const airplaneImg = new Image();
+airplaneImg.src = "https://icons.iconarchive.com/icons/iconblock/remixed/64/Plane-icon.png";
 
 // Joystick
 const joystick = document.getElementById("joystick");
@@ -54,24 +47,29 @@ joystick.addEventListener("touchend", () => {
   stick.style.transform = `translate(0px, 0px)`;
 });
 
+// Tap to shoot
+canvas.addEventListener("touchstart", (e) => {
+  if (e.target.closest("#joystick")) return;
+  bullets.push({
+    x: plane.x + Math.cos(plane.angle) * 20,
+    y: plane.y + Math.sin(plane.angle) * 20,
+    angle: plane.angle,
+    speed: 8,
+  });
+});
+
 function drawPlane() {
+  const size = 64;
   ctx.save();
   ctx.translate(plane.x, plane.y);
-  ctx.rotate(plane.angle);
-  ctx.fillStyle = "gray";
-  ctx.beginPath();
-  ctx.moveTo(20, 0);
-  ctx.lineTo(-10, -10);
-  ctx.lineTo(-10, 10);
-  ctx.closePath();
-  ctx.fill();
+  ctx.rotate(plane.angle + Math.PI / 2); // Adjust because image faces up
+  ctx.drawImage(airplaneImg, -size / 2, -size / 2, size, size);
   ctx.restore();
 }
 
 function updatePlane() {
   plane.angle += input.dx * plane.rotationSpeed;
   plane.speed = input.dy * plane.maxSpeed;
-
   plane.x += Math.cos(plane.angle) * plane.speed;
   plane.y += Math.sin(plane.angle) * plane.speed;
 
@@ -95,8 +93,6 @@ function updateBullets() {
     b.x += Math.cos(b.angle) * b.speed;
     b.y += Math.sin(b.angle) * b.speed;
   });
-
-  // Remove offscreen bullets
   bullets = bullets.filter(
     (b) => b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height
   );
@@ -125,18 +121,17 @@ function updateEnemies() {
   enemies.forEach((e) => {
     e.x -= e.speed;
   });
-
   enemies = enemies.filter((e) => e.x + e.radius > 0);
 }
 
 function checkCollisions() {
-  bullets.forEach((b, i) => {
-    enemies.forEach((e, j) => {
+  bullets.forEach((b, bi) => {
+    enemies.forEach((e, ei) => {
       const dx = b.x - e.x;
       const dy = b.y - e.y;
       if (Math.hypot(dx, dy) < e.radius + 4) {
-        bullets.splice(i, 1);
-        enemies.splice(j, 1);
+        bullets.splice(bi, 1);
+        enemies.splice(ei, 1);
         score += 1;
       }
     });
@@ -165,6 +160,5 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-// Start enemy spawner
 setInterval(spawnEnemy, 1000);
 loop();
