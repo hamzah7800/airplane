@@ -10,6 +10,7 @@ body, html {
   overflow: hidden;
   background-color: skyblue;
   touch-action: none;
+  font-family: sans-serif;
 }
 
 canvas {
@@ -26,7 +27,6 @@ canvas {
   height: 120px;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 50%;
-  touch-action: none;
 }
 
 #stick {
@@ -37,4 +37,60 @@ canvas {
   position: relative;
   top: 30px;
   left: 30px;
+}
+
+#shootButton {
+  position: absolute;
+  bottom: 40px;
+  right: 20px;
+  padding: 15px 25px;
+  font-size: 18px;
+  background: red;
+  color: white;
+  border: none;
+  border-radius: 10px;
+}
+
+#ui {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 200px;
+  color: black;
+}
+
+#healthBar {
+  width: 100%;
+  height: 20px;
+  background: #ddd;
+  margin-bottom: 5px;
+  border: 2px solid #555;
+}
+#health {
+  width: 100%;
+  height: 100%;
+  background: green;
+}
+
+#scoreText {
+  font-size: 20px;
+  margin-bottom: 5px;
+}
+
+#reloadText {
+  color: red;
+  display: none;
+}
+
+#gameOverScreen {
+  display: none;
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border: 4px solid #333;
+  padding: 30px;
+  text-align: center;
+  border-radius: 20px;
 }
