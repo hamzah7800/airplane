@@ -16,6 +16,14 @@ const gameOverScreen = document.getElementById("gameOverScreen");
 
 let plane, input, bullets, enemies, score, health, canShoot, reloading, gameOver;
 
+let skyTime = 0;
+const dayDuration = 3 * 60 * 1000;
+
+let clouds = [];
+let stars = [];
+const numClouds = 10;
+const numStars = 60;
+
 function resetGame() {
   plane = {
     x: canvas.width / 2,
@@ -40,6 +48,20 @@ function resetGame() {
   reloadText.style.display = "none";
   healthBar.style.width = "100%";
   scoreText.textContent = "Score: 0";
+
+  clouds = Array.from({ length: numClouds }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height / 2,
+    speed: 0.2 + Math.random() * 0.3,
+    size: 50 + Math.random() * 50
+  }));
+
+  stars = Array.from({ length: numStars }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: Math.random() * 2 + 1,
+    brightness: Math.random() * 0.5 + 0.5
+  }));
 }
 
 resetGame();
@@ -79,7 +101,7 @@ function shoot() {
     canShoot = true;
     reloading = false;
     reloadText.style.display = "none";
-  }, 600); // 600ms reload
+  }, 600);
 }
 
 function drawPlane() {
@@ -171,6 +193,66 @@ function checkCollisions() {
   });
 }
 
+function drawSky() {
+  skyTime = (Date.now() % (dayDuration * 2));
+  const t = skyTime % (dayDuration * 2);
+  const isDay = t < dayDuration;
+
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  if (isDay) {
+    grad.addColorStop(0, "#87ceeb");
+    grad.addColorStop(1, "#ffffff");
+  } else {
+    grad.addColorStop(0, "#001d3d");
+    grad.addColorStop(1, "#000000");
+  }
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const angle = (t / (dayDuration * 2)) * Math.PI * 2;
+  const sunX = canvas.width / 2 + Math.cos(angle) * canvas.width / 3;
+  const sunY = canvas.height / 2 + Math.sin(angle) * canvas.height / 3;
+  const moonX = canvas.width / 2 - Math.cos(angle) * canvas.width / 3;
+  const moonY = canvas.height / 2 - Math.sin(angle) * canvas.height / 3;
+
+  if (isDay) drawClouds();
+  else drawStars();
+
+  ctx.beginPath();
+  ctx.fillStyle = "yellow";
+  ctx.arc(sunX, sunY, 30, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.fillStyle = "white";
+  ctx.arc(moonX, moonY, 20, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawClouds() {
+  ctx.fillStyle = "rgba(255,255,255,0.8)";
+  clouds.forEach(c => {
+    ctx.beginPath();
+    ctx.ellipse(c.x, c.y, c.size, c.size * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    c.x -= c.speed;
+    if (c.x + c.size < 0) {
+      c.x = canvas.width + c.size;
+      c.y = Math.random() * canvas.height / 2;
+    }
+  });
+}
+
+function drawStars() {
+  stars.forEach(s => {
+    ctx.beginPath();
+    const alpha = 0.3 + 0.7 * Math.abs(Math.sin(s.brightness * skyTime / 1000));
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
 function endGame() {
   gameOver = true;
   gameOverScreen.style.display = "block";
@@ -181,7 +263,7 @@ function restartGame() {
 }
 
 function loop() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawSky();
   if (!gameOver) {
     updatePlane();
     updateBullets();
@@ -194,5 +276,5 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-setInterval(spawnEnemy, 3000); // fewer enemies
+setInterval(spawnEnemy, 3000);
 loop();
