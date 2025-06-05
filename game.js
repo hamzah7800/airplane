@@ -15,14 +15,18 @@ const reloadText = document.getElementById("reloadText");
 const gameOverScreen = document.getElementById("gameOverScreen");
 
 let plane, input, bullets, enemies, score, health, canShoot, reloading, gameOver;
-
-let skyTime = 0;
-const dayDuration = 3 * 60 * 1000;
-
-let clouds = [];
-let stars = [];
-const numClouds = 10;
-const numStars = 60;
+let isDay = true;
+let dayNightTimer = Date.now();
+const stars = Array.from({ length: 100 }, () => ({
+  x: Math.random() * canvas.width,
+  y: Math.random() * canvas.height,
+  radius: Math.random() * 1.5 + 0.5,
+}));
+const clouds = Array.from({ length: 5 }, () => ({
+  x: Math.random() * canvas.width,
+  y: Math.random() * canvas.height / 2,
+  speed: 0.2 + Math.random() * 0.3,
+}));
 
 function resetGame() {
   plane = {
@@ -48,20 +52,7 @@ function resetGame() {
   reloadText.style.display = "none";
   healthBar.style.width = "100%";
   scoreText.textContent = "Score: 0";
-
-  clouds = Array.from({ length: numClouds }, () => ({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height / 2,
-    speed: 0.2 + Math.random() * 0.3,
-    size: 50 + Math.random() * 50
-  }));
-
-  stars = Array.from({ length: numStars }, () => ({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    size: Math.random() * 2 + 1,
-    brightness: Math.random() * 0.5 + 0.5
-  }));
+  dayNightTimer = Date.now();
 }
 
 resetGame();
@@ -88,12 +79,39 @@ shootButton.addEventListener("touchstart", shoot);
 
 function shoot() {
   if (!canShoot || reloading || gameOver) return;
+
+  let angle = plane.angle;
+
+  // Auto-aim logic
+  let nearestEnemy = null;
+  let minDist = Infinity;
+  for (const e of enemies) {
+    const dx = e.x - plane.x;
+    const dy = e.y - plane.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < minDist && dist < 300) {
+      minDist = dist;
+      nearestEnemy = e;
+    }
+  }
+
+  if (nearestEnemy) {
+    const dx = nearestEnemy.x - plane.x;
+    const dy = nearestEnemy.y - plane.y;
+    const targetAngle = Math.atan2(dy, dx);
+    const diff = normalizeAngle(targetAngle - angle);
+    if (Math.abs(diff) < 0.5) {  // aim assist cone
+      angle += diff * 0.5; // soft lock/adjust
+    }
+  }
+
   bullets.push({
-    x: plane.x + Math.cos(plane.angle) * 20,
-    y: plane.y + Math.sin(plane.angle) * 20,
-    angle: plane.angle,
+    x: plane.x + Math.cos(angle) * 20,
+    y: plane.y + Math.sin(angle) * 20,
+    angle: angle,
     speed: 10,
   });
+
   canShoot = false;
   reloadText.style.display = "block";
   reloading = true;
@@ -102,6 +120,12 @@ function shoot() {
     reloading = false;
     reloadText.style.display = "none";
   }, 600);
+}
+
+function normalizeAngle(angle) {
+  while (angle > Math.PI) angle -= Math.PI * 2;
+  while (angle < -Math.PI) angle += Math.PI * 2;
+  return angle;
 }
 
 function drawPlane() {
@@ -164,6 +188,59 @@ function drawEnemies() {
   });
 }
 
+function drawSky() {
+  ctx.fillStyle = isDay ? "#87CEEB" : "#000022";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (!isDay) {
+    ctx.fillStyle = "white";
+    stars.forEach(s => {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  } else {
+    clouds.forEach(cloud => {
+      ctx.fillStyle = "white";
+      ctx.beginPath();
+      ctx.ellipse(cloud.x, cloud.y, 40, 20, 0, 0, Math.PI * 2);
+      ctx.fill();
+      cloud.x -= cloud.speed;
+      if (cloud.x < -80) {
+        cloud.x = canvas.width + Math.random() * 100;
+        cloud.y = Math.random() * canvas.height / 2;
+      }
+    });
+  }
+
+  drawSunAndMoon();
+}
+
+function drawSunAndMoon() {
+  const now = Date.now();
+  const elapsed = (now - dayNightTimer) / 1000;
+  if (elapsed >= 180) {
+    isDay = !isDay;
+    dayNightTimer = now;
+  }
+
+  const progress = (elapsed % 180) / 180;
+  const sunX = canvas.width * progress;
+  const moonX = canvas.width * ((progress + 0.5) % 1);
+
+  if (isDay) {
+    ctx.fillStyle = "yellow";
+    ctx.beginPath();
+    ctx.arc(sunX, 100, 30, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.fillStyle = "#ccc";
+    ctx.beginPath();
+    ctx.arc(moonX, 100, 25, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
 function checkCollisions() {
   bullets.forEach((b, bi) => {
     enemies.forEach((e, ei) => {
@@ -186,77 +263,15 @@ function checkCollisions() {
       health -= 20;
       if (health < 0) health = 0;
       healthBar.style.width = `${health}%`;
-      if (health <= 0) {
-        endGame();
-      }
+      if (health <= 0) endGame();
     }
-  });
-}
-
-function drawSky() {
-  skyTime = (Date.now() % (dayDuration * 2));
-  const t = skyTime % (dayDuration * 2);
-  const isDay = t < dayDuration;
-
-  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  if (isDay) {
-    grad.addColorStop(0, "#87ceeb");
-    grad.addColorStop(1, "#ffffff");
-  } else {
-    grad.addColorStop(0, "#001d3d");
-    grad.addColorStop(1, "#000000");
-  }
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  const angle = (t / (dayDuration * 2)) * Math.PI * 2;
-  const sunX = canvas.width / 2 + Math.cos(angle) * canvas.width / 3;
-  const sunY = canvas.height / 2 + Math.sin(angle) * canvas.height / 3;
-  const moonX = canvas.width / 2 - Math.cos(angle) * canvas.width / 3;
-  const moonY = canvas.height / 2 - Math.sin(angle) * canvas.height / 3;
-
-  if (isDay) drawClouds();
-  else drawStars();
-
-  ctx.beginPath();
-  ctx.fillStyle = "yellow";
-  ctx.arc(sunX, sunY, 30, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.fillStyle = "white";
-  ctx.arc(moonX, moonY, 20, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawClouds() {
-  ctx.fillStyle = "rgba(255,255,255,0.8)";
-  clouds.forEach(c => {
-    ctx.beginPath();
-    ctx.ellipse(c.x, c.y, c.size, c.size * 0.6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    c.x -= c.speed;
-    if (c.x + c.size < 0) {
-      c.x = canvas.width + c.size;
-      c.y = Math.random() * canvas.height / 2;
-    }
-  });
-}
-
-function drawStars() {
-  stars.forEach(s => {
-    ctx.beginPath();
-    const alpha = 0.3 + 0.7 * Math.abs(Math.sin(s.brightness * skyTime / 1000));
-    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-    ctx.fill();
   });
 }
 
 function endGame() {
   gameOver = true;
   gameOverScreen.style.display = "block";
-}
+}https://chatgpt.com/c/68415e29-3ec8-8006-9915-f38dafa91556
 
 function restartGame() {
   resetGame();
