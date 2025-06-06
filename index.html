@@ -1,128 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Airplane Game</title>
-  <style>
-    html, body {
-      margin: 0;
-      overflow: hidden;
-      touch-action: none;
-      font-family: sans-serif;
-    }
-
-    canvas {
-      display: block;
-      background: #87CEEB;
-    }
-
-    #joystick {
-      position: fixed;
-      left: 20px;
-      bottom: 20px;
-      width: 120px;
-      height: 120px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 50%;
-      touch-action: none;
-    }
-
-    #stick {
-      width: 40px;
-      height: 40px;
-      background: #fff;
-      border-radius: 50%;
-      position: relative;
-      top: 40px;
-      left: 40px;
-    }
-
-    #shootButton {
-      position: fixed;
-      right: 20px;
-      bottom: 30px;
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: red;
-      color: white;
-      font-size: 18px;
-      border: none;
-      touch-action: none;
-    }
-
-    #healthBarContainer {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      width: 200px;
-      height: 20px;
-      background: #333;
-    }
-
-    #health {
-      height: 100%;
-      width: 100%;
-      background: green;
-    }
-
-    #scoreText {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      font-size: 20px;
-      color: white;
-    }
-
-    #reloadText {
-      position: fixed;
-      right: 20px;
-      bottom: 120px;
-      font-size: 18px;
-      color: yellow;
-      display: none;
-    }
-
-    #gameOverScreen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.8);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      font-size: 36px;
-      flex-direction: column;
-    }
-
-    #gameOverScreen button {
-      margin-top: 20px;
-      font-size: 24px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
 
+  <!-- Joystick -->
   <div id="joystick">
     <div id="stick"></div>
   </div>
 
+  <!-- Shoot Button -->
   <button id="shootButton">Shoot</button>
-  <div id="reloadText">Reloading...</div>
 
-  <div id="healthBarContainer">
-    <div id="health"></div>
+  <!-- HUD -->
+  <div id="hud">
+    <div id="healthContainer"><div id="health"></div></div>
+    <div id="scoreText">Score: 0</div>
+    <div id="reloadText" style="display: none;">Reloading...</div>
   </div>
 
-  <div id="scoreText">Score: 0</div>
-
-  <div id="gameOverScreen">
-    <div>Game Over</div>
+  <!-- Game Over Screen -->
+  <div id="gameOverScreen" style="display: none;">
+    <h1>Game Over</h1>
     <button onclick="restartGame()">Restart</button>
   </div>
 
