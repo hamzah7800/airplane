@@ -5,15 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Airplane Game</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #87CEEB;
+    }
+    canvas {
+      border: 2px solid #000;
+      background-color: #fff;
+    }
+    #joystick {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      margin: 20px;
+    }
+    #stick {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background-color: #fff;
+      border-radius: 50%;
+      top: 25px;
+      left: 25px;
+      cursor: pointer;
+    }
+    #ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: #fff;
+    }
+    #healthBar {
+      width: 100px;
+      height: 20px;
+      background-color: red;
+      border: 1px solid #000;
+    }
+    #health {
+      height: 100%;
+      width: 100%;
+      background-color: green;
+    }
+    #gameOverScreen {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
   <div id="joystick"><div id="stick"></div></div>
   <button id="shootButton">Shoot</button>
   <div id="ui">
     <div id="healthBar"><div id="health"></div></div>
     <div id="scoreText">Score: 0</div>
-    <div id="reloadText">Reloading...</div>
+    <div id="reloadText" style="display: none;">Reloading...</div>
   </div>
   <div id="gameOverScreen">
     <h1>Game Over</h1>
