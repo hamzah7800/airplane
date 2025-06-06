@@ -4,81 +4,128 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Airplane Game</title>
-  <link rel="stylesheet" href="style.css" />
   <style>
-    body {
+    html, body {
       margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background-color: #87CEEB;
+      overflow: hidden;
+      touch-action: none;
+      font-family: sans-serif;
     }
+
     canvas {
-      border: 2px solid #000;
-      background-color: #fff;
+      display: block;
+      background: #87CEEB;
     }
+
     #joystick {
-      position: relative;
-      width: 100px;
-      height: 100px;
-      background-color: rgba(0, 0, 0, 0.5);
+      position: fixed;
+      left: 20px;
+      bottom: 20px;
+      width: 120px;
+      height: 120px;
+      background: rgba(0, 0, 0, 0.2);
       border-radius: 50%;
-      margin: 20px;
+      touch-action: none;
     }
+
     #stick {
-      position: absolute;
-      width: 50px;
-      height: 50px;
-      background-color: #fff;
+      width: 40px;
+      height: 40px;
+      background: #fff;
       border-radius: 50%;
-      top: 25px;
-      left: 25px;
-      cursor: pointer;
+      position: relative;
+      top: 40px;
+      left: 40px;
     }
-    #ui {
-      position: absolute;
+
+    #shootButton {
+      position: fixed;
+      right: 20px;
+      bottom: 30px;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: red;
+      color: white;
+      font-size: 18px;
+      border: none;
+      touch-action: none;
+    }
+
+    #healthBarContainer {
+      position: fixed;
       top: 10px;
       left: 10px;
-      color: #fff;
-    }
-    #healthBar {
-      width: 100px;
+      width: 200px;
       height: 20px;
-      background-color: red;
-      border: 1px solid #000;
+      background: #333;
     }
+
     #health {
       height: 100%;
       width: 100%;
-      background-color: green;
+      background: green;
     }
-    #gameOverScreen {
-      display: none;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: rgba(0, 0, 0, 0.8);
+
+    #scoreText {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      font-size: 20px;
       color: white;
-      padding: 20px;
-      border-radius: 10px;
-      text-align: center;
+    }
+
+    #reloadText {
+      position: fixed;
+      right: 20px;
+      bottom: 120px;
+      font-size: 18px;
+      color: yellow;
+      display: none;
+    }
+
+    #gameOverScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 36px;
+      flex-direction: column;
+    }
+
+    #gameOverScreen button {
+      margin-top: 20px;
+      font-size: 24px;
     }
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas" width="800" height="600"></canvas>
-  <div id="joystick"><div id="stick"></div></div>
-  <button id="shootButton">Shoot</button>
-  <div id="ui">
-    <div id="healthBar"><div id="health"></div></div>
-    <div id="scoreText">Score: 0</div>
-    <div id="reloadText" style="display: none;">Reloading...</div>
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="joystick">
+    <div id="stick"></div>
   </div>
+
+  <button id="shootButton">Shoot</button>
+  <div id="reloadText">Reloading...</div>
+
+  <div id="healthBarContainer">
+    <div id="health"></div>
+  </div>
+
+  <div id="scoreText">Score: 0</div>
+
   <div id="gameOverScreen">
-    <h1>Game Over</h1>
+    <div>Game Over</div>
     <button onclick="restartGame()">Restart</button>
   </div>
+
   <script src="game.js"></script>
 </body>
 </html>
