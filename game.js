@@ -143,7 +143,7 @@ function normalizeAngle(angle) {
 function drawPlane() {
   ctx.save();
   ctx.translate(plane.x, plane.y);
-  ctx.rotate(plane.angle + Math.PI / 2);
+  ctx.rotate(plane.angle);
   ctx.drawImage(airplaneImg, -32, -32, 64, 64);
   ctx.restore();
 }
