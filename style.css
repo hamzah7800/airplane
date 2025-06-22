@@ -1,0 +1,15 @@
+
+#codeEntry {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  border-radius: 8px;
+}
+#helperCode {
+  padding: 5px;
+  border: none;
+  outline: none;
+}
