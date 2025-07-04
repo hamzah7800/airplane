@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Airplane Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Joystick -->
+  <div id="joystick">
+    <div id="stick"></div>
+  </div>
+
+  <!-- Shoot Button -->
+  <button id="shootButton">Shoot</button>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="healthContainer"><div id="health"></div></div>
+    <div id="scoreText">Score: 0</div>
+    <div id="reloadText" style="display: none;">Reloading...</div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="gameOverScreen" style="display: none;">
+    <h1>Game Over</h1>
+    <button onclick="restartGame()">Restart</button>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
