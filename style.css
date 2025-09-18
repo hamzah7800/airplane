@@ -138,6 +138,11 @@ body, html {
   text-shadow: 0 0 10px #f00, 0 0 20px #f00;
 }
 
+#gameOverScreen p {
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
 #gameOverScreen button {
   padding: 12px 24px;
   font-size: 20px;
