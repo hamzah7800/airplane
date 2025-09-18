@@ -13,10 +13,12 @@ const healthBar = document.getElementById("health");
 const scoreText = document.getElementById("scoreText");
 const reloadText = document.getElementById("reloadText");
 const gameOverScreen = document.getElementById("gameOverScreen");
+const finalScoreText = document.getElementById("finalScore");
 
 let plane, input, bullets, enemies, powerUps, particles, score, health, targetHealth, canShoot, reloading, gameOver;
 let isDay = true;
 let dayNightTimer = Date.now();
+
 const stars = Array.from({ length: 100 }, () => ({
   x: Math.random() * canvas.width,
   y: Math.random() * canvas.height,
@@ -24,6 +26,7 @@ const stars = Array.from({ length: 100 }, () => ({
   twinkle: Math.random() * 0.05 + 0.02,
   alpha: Math.random()
 }));
+
 const clouds = Array.from({ length: 5 }, () => ({
   x: Math.random() * canvas.width,
   y: Math.random() * canvas.height / 2,
@@ -53,22 +56,34 @@ function resetGame() {
   canShoot = true;
   reloading = false;
   gameOver = false;
-  gameOverScreen.style.display = "none";
+  gameOverScreen.classList.remove("show");
   reloadText.style.display = "none";
   healthBar.style.width = "100%";
+  healthBar.classList.remove("low");
   scoreText.textContent = "Score: 0";
   dayNightTimer = Date.now();
 }
 
 resetGame();
 
-// ================= CONTROLS =================
+// ================= INPUT =================
+let keys = {};
+
+window.addEventListener("keydown", (e) => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key.toLowerCase() === "f") shoot();
+});
+
+window.addEventListener("keyup", (e) => {
+  keys[e.key.toLowerCase()] = false;
+});
+
 joystick.addEventListener("touchmove", (e) => {
   const rect = joystick.getBoundingClientRect();
   const touch = e.touches[0];
-  const x = touch.clientX - rect.left - 60;
-  const y = touch.clientY - rect.top - 60;
-  const max = 40;
+  const x = touch.clientX - rect.left - rect.width / 2;
+  const y = touch.clientY - rect.top - rect.height / 2;
+  const max = rect.width / 2 - 20;
   const dist = Math.min(Math.hypot(x, y), max);
   const angle = Math.atan2(y, x);
   input.dx = Math.cos(angle) * dist / max;
@@ -81,7 +96,7 @@ joystick.addEventListener("touchend", () => {
   stick.style.transform = `translate(0px, 0px)`;
 });
 
-shootButton.addEventListener("touchstart", shoot);
+shootButton.addEventListener("touchstart", () => shoot());
 
 // ================= SHOOTING =================
 function shoot() {
@@ -114,14 +129,25 @@ function drawPlane() {
 }
 
 function updatePlane() {
-  plane.angle += input.dx * plane.rotationSpeed;
-  let thrust = input.dy * plane.accel;
+  let dx = 0, dy = 0;
+  if (keys["a"]) dx = -1;
+  if (keys["d"]) dx = 1;
+  if (keys["w"]) dy = -1;
+  if (keys["s"]) dy = 1;
+
+  const finalDx = dx !== 0 ? dx : input.dx;
+  const finalDy = dy !== 0 ? dy : input.dy;
+
+  plane.angle += finalDx * plane.rotationSpeed;
+  let thrust = finalDy * plane.accel;
   plane.vx += Math.cos(plane.angle) * thrust;
   plane.vy += Math.sin(plane.angle) * thrust;
+
   plane.vx *= plane.friction;
   plane.vy *= plane.friction;
   plane.x += plane.vx;
   plane.y += plane.vy;
+
   if (plane.x < 0) plane.x = canvas.width;
   if (plane.x > canvas.width) plane.x = 0;
   if (plane.y < 0) plane.y = canvas.height;
@@ -195,7 +221,7 @@ function drawPowerUps() {
   });
 }
 
-// ================= PARTICLES (EXPLOSIONS) =================
+// ================= PARTICLES =================
 function spawnExplosion(x, y, color) {
   for (let i = 0; i < 15; i++) {
     particles.push({
@@ -332,7 +358,8 @@ function checkCollisions() {
 // ================= GAME STATE =================
 function endGame() {
   gameOver = true;
-  gameOverScreen.style.display = "block";
+  finalScoreText.textContent = "Score: " + score;
+  gameOverScreen.classList.add("show");
 }
 
 function restartGame() {
@@ -340,8 +367,14 @@ function restartGame() {
 }
 
 function updateHealthBar() {
-  health += (targetHealth - health) * 0.1; // smooth animation
+  health += (targetHealth - health) * 0.1;
   healthBar.style.width = `${health}%`;
+
+  if (health <= 30) {
+    healthBar.classList.add("low");
+  } else {
+    healthBar.classList.remove("low");
+  }
 }
 
 // ================= LOOP =================
