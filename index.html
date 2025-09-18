@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Game Canvas -->
   <canvas id="gameCanvas"></canvas>
 
   <!-- Joystick -->
@@ -20,21 +19,17 @@
 
   <!-- HUD -->
   <div id="hud">
-    <div id="healthContainer">
-      <div id="health"></div>
-    </div>
+    <div id="healthContainer"><div id="health"></div></div>
     <div id="scoreText">Score: 0</div>
     <div id="reloadText" style="display: none;">Reloading...</div>
   </div>
 
   <!-- Game Over Screen -->
-  <div id="gameOverScreen">
+  <div id="gameOverScreen" style="display: none;">
     <h1>Game Over</h1>
-    <p id="finalScore">Score: 0</p>
     <button onclick="restartGame()">Restart</button>
   </div>
 
-  <!-- Game Script -->
   <script src="game.js"></script>
 </body>
 </html>
