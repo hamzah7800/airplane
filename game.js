@@ -13,20 +13,15 @@ const healthBar = document.getElementById("health");
 const scoreText = document.getElementById("scoreText");
 const reloadText = document.getElementById("reloadText");
 const gameOverScreen = document.getElementById("gameOverScreen");
-const finalScoreText = document.getElementById("finalScore");
 
-let plane, input, bullets, enemies, powerUps, particles, score, health, targetHealth, canShoot, reloading, gameOver;
+let plane, input, bullets, enemies, score, health, canShoot, reloading, gameOver;
 let isDay = true;
 let dayNightTimer = Date.now();
-
 const stars = Array.from({ length: 100 }, () => ({
   x: Math.random() * canvas.width,
   y: Math.random() * canvas.height,
   radius: Math.random() * 1.5 + 0.5,
-  twinkle: Math.random() * 0.05 + 0.02,
-  alpha: Math.random()
 }));
-
 const clouds = Array.from({ length: 5 }, () => ({
   x: Math.random() * canvas.width,
   y: Math.random() * canvas.height / 2,
@@ -34,61 +29,53 @@ const clouds = Array.from({ length: 5 }, () => ({
 }));
 
 function resetGame() {
-  plane = {
-    x: canvas.width / 2,
-    y: canvas.height / 2,
-    angle: 0,
-    vx: 0,
-    vy: 0,
-    accel: 0.2,
-    friction: 0.98,
-    maxSpeed: 5,
-    rotationSpeed: 0.05,
-  };
-  input = { dx: 0, dy: 0 };
-  bullets = [];
-  enemies = [];
-  powerUps = [];
-  particles = [];
-  score = 0;
-  health = 100;
-  targetHealth = 100;
-  canShoot = true;
-  reloading = false;
-  gameOver = false;
-  gameOverScreen.classList.remove("show");
-  reloadText.style.display = "none";
-  healthBar.style.width = "100%";
-  healthBar.classList.remove("low");
-  scoreText.textContent = "Score: 0";
-  dayNightTimer = Date.now();
+  try {
+    plane = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      angle: 0,
+      vx: 0,
+      vy: 0,
+      accel: 0.2,
+      friction: 0.98,
+      maxSpeed: 5,
+      rotationSpeed: 0.05,
+    };
+    input = { dx: 0, dy: 0 };
+    bullets = [];
+    enemies = [];
+    score = 0;
+    health = 100;
+    canShoot = true;
+    reloading = false;
+    gameOver = false;
+    gameOverScreen.style.display = "none";
+    reloadText.style.display = "none";
+    healthBar.style.width = "100%";
+    scoreText.textContent = "Score: 0";
+    dayNightTimer = Date.now();
+  } catch (error) {
+    console.error("Error resetting game:", error);
+  }
 }
 
 resetGame();
 
-// ================= INPUT =================
-let keys = {};
-
-window.addEventListener("keydown", (e) => {
-  keys[e.key.toLowerCase()] = true;
-  if (e.key.toLowerCase() === "f") shoot();
-});
-
-window.addEventListener("keyup", (e) => {
-  keys[e.key.toLowerCase()] = false;
-});
-
 joystick.addEventListener("touchmove", (e) => {
-  const rect = joystick.getBoundingClientRect();
-  const touch = e.touches[0];
-  const x = touch.clientX - rect.left - rect.width / 2;
-  const y = touch.clientY - rect.top - rect.height / 2;
-  const max = rect.width / 2 - 20;
-  const dist = Math.min(Math.hypot(x, y), max);
-  const angle = Math.atan2(y, x);
-  input.dx = Math.cos(angle) * dist / max;
-  input.dy = Math.sin(angle) * dist / max;
-  stick.style.transform = `translate(${input.dx * max}px, ${input.dy * max}px)`;
+  try {
+    const rect = joystick.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left - 60;
+    const y = touch.clientY - rect.top - 60;
+    const max = 40;
+    const dist = Math.min(Math.hypot(x, y), max);
+    const angle = Math.atan2(y, x);
+    input.dx = Math.cos(angle) * dist / max;
+    input.dy = Math.sin(angle) * dist / max;
+    stick.style.transform = `translate(${input.dx * max}px, ${input.dy * max}px)`;
+  } catch (error) {
+    console.error("Error during joystick movement:", error);
+  }
 });
 
 joystick.addEventListener("touchend", () => {
@@ -96,30 +83,63 @@ joystick.addEventListener("touchend", () => {
   stick.style.transform = `translate(0px, 0px)`;
 });
 
-shootButton.addEventListener("touchstart", () => shoot());
+shootButton.addEventListener("touchstart", shoot);
 
-// ================= SHOOTING =================
 function shoot() {
-  if (!canShoot || reloading || gameOver) return;
+  try {
+    if (!canShoot || reloading || gameOver) return;
 
-  bullets.push({
-    x: plane.x + Math.cos(plane.angle) * 20,
-    y: plane.y + Math.sin(plane.angle) * 20,
-    angle: plane.angle,
-    speed: 10,
-  });
+    let angle = plane.angle;
 
-  canShoot = false;
-  reloadText.style.display = "block";
-  reloading = true;
-  setTimeout(() => {
-    canShoot = true;
-    reloading = false;
-    reloadText.style.display = "none";
-  }, 600);
+    // Auto-aim logic
+    let nearestEnemy = null;
+    let minDist = Infinity;
+    for (const e of enemies) {
+      const dx = e.x - plane.x;
+      const dy = e.y - plane.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < minDist && dist < 300) {
+        minDist = dist;
+        nearestEnemy = e;
+      }
+    }
+
+    if (nearestEnemy) {
+      const dx = nearestEnemy.x - plane.x;
+      const dy = nearestEnemy.y - plane.y;
+      const targetAngle = Math.atan2(dy, dx);
+      const diff = normalizeAngle(targetAngle - angle);
+      if (Math.abs(diff) < 0.5) {  // aim assist cone
+        angle += diff * 0.5; // soft lock/adjust
+      }
+    }
+
+    bullets.push({
+      x: plane.x + Math.cos(angle) * 20,
+      y: plane.y + Math.sin(angle) * 20,
+      angle: angle,
+      speed: 10,
+    });
+
+    canShoot = false;
+    reloadText.style.display = "block";
+    reloading = true;
+    setTimeout(() => {
+      canShoot = true;
+      reloading = false;
+      reloadText.style.display = "none";
+    }, 600);
+  } catch (error) {
+    console.error("Error during shooting:", error);
+  }
 }
 
-// ================= PLANE =================
+function normalizeAngle(angle) {
+  while (angle > Math.PI) angle -= Math.PI * 2;
+  while (angle < -Math.PI) angle += Math.PI * 2;
+  return angle;
+}
+
 function drawPlane() {
   ctx.save();
   ctx.translate(plane.x, plane.y);
@@ -129,38 +149,34 @@ function drawPlane() {
 }
 
 function updatePlane() {
-  let dx = 0, dy = 0;
-  if (keys["a"]) dx = -1;
-  if (keys["d"]) dx = 1;
-  if (keys["w"]) dy = -1;
-  if (keys["s"]) dy = 1;
-
-  const finalDx = dx !== 0 ? dx : input.dx;
-  const finalDy = dy !== 0 ? dy : input.dy;
-
-  plane.angle += finalDx * plane.rotationSpeed;
-  let thrust = finalDy * plane.accel;
-  plane.vx += Math.cos(plane.angle) * thrust;
-  plane.vy += Math.sin(plane.angle) * thrust;
-
-  plane.vx *= plane.friction;
-  plane.vy *= plane.friction;
-  plane.x += plane.vx;
-  plane.y += plane.vy;
-
-  if (plane.x < 0) plane.x = canvas.width;
-  if (plane.x > canvas.width) plane.x = 0;
-  if (plane.y < 0) plane.y = canvas.height;
-  if (plane.y > canvas.height) plane.y = 0;
+  try {
+    plane.angle += input.dx * plane.rotationSpeed;
+    let thrust = input.dy * plane.accel;
+    plane.vx += Math.cos(plane.angle) * thrust;
+    plane.vy += Math.sin(plane.angle) * thrust;
+    plane.vx *= plane.friction;
+    plane.vy *= plane.friction;
+    plane.x += plane.vx;
+    plane.y += plane.vy;
+    if (plane.x < 0) plane.x = canvas.width;
+    if (plane.x > canvas.width) plane.x = 0;
+    if (plane.y < 0) plane.y = canvas.height;
+    if (plane.y > canvas.height) plane.y = 0;
+  } catch (error) {
+    console.error("Error updating plane:", error);
+  }
 }
 
-// ================= BULLETS =================
 function updateBullets() {
-  bullets.forEach(b => {
-    b.x += Math.cos(b.angle) * b.speed;
-    b.y += Math.sin(b.angle) * b.speed;
-  });
-  bullets = bullets.filter(b => b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height);
+  try {
+    bullets.forEach(b => {
+      b.x += Math.cos(b.angle) * b.speed;
+      b.y += Math.sin(b.angle) * b.speed;
+    });
+    bullets = bullets.filter(b => b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height);
+  } catch (error) {
+    console.error("Error updating bullets:", error);
+  }
 }
 
 function drawBullets() {
@@ -172,89 +188,30 @@ function drawBullets() {
   });
 }
 
-// ================= ENEMIES =================
 function spawnEnemy() {
   if (gameOver) return;
   const y = Math.random() * canvas.height;
-  const type = Math.random() < 0.5 ? "fast" : "tank";
-  if (type === "fast") {
-    enemies.push({ x: canvas.width + 30, y, speed: 4, radius: 15, type });
-  } else {
-    enemies.push({ x: canvas.width + 30, y, speed: 1.5, radius: 30, type });
-  }
+  enemies.push({ x: canvas.width + 30, y: y, speed: 2, radius: 20 });
 }
 
 function updateEnemies() {
-  enemies.forEach(e => e.x -= e.speed);
-  enemies = enemies.filter(e => e.x + e.radius > 0);
+  try {
+    enemies.forEach(e => e.x -= e.speed);
+    enemies = enemies.filter(e => e.x + e.radius > 0);
+  } catch (error) {
+    console.error("Error updating enemies:", error);
+  }
 }
 
 function drawEnemies() {
+  ctx.fillStyle = "red";
   enemies.forEach(e => {
-    ctx.fillStyle = e.type === "fast" ? "orange" : "red";
     ctx.beginPath();
     ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
     ctx.fill();
   });
 }
 
-// ================= POWERUPS =================
-function spawnPowerUp() {
-  if (Math.random() < 0.5) {
-    powerUps.push({ x: canvas.width + 30, y: Math.random() * canvas.height, type: "health", speed: 2 });
-  } else {
-    powerUps.push({ x: canvas.width + 30, y: Math.random() * canvas.height, type: "rapid", speed: 2 });
-  }
-}
-
-function updatePowerUps() {
-  powerUps.forEach(p => p.x -= p.speed);
-  powerUps = powerUps.filter(p => p.x > -30);
-}
-
-function drawPowerUps() {
-  powerUps.forEach(p => {
-    ctx.fillStyle = p.type === "health" ? "lime" : "cyan";
-    ctx.beginPath();
-    ctx.rect(p.x - 10, p.y - 10, 20, 20);
-    ctx.fill();
-  });
-}
-
-// ================= PARTICLES =================
-function spawnExplosion(x, y, color) {
-  for (let i = 0; i < 15; i++) {
-    particles.push({
-      x, y,
-      vx: (Math.random() - 0.5) * 4,
-      vy: (Math.random() - 0.5) * 4,
-      life: 30,
-      color
-    });
-  }
-}
-
-function updateParticles() {
-  particles.forEach(p => {
-    p.x += p.vx;
-    p.y += p.vy;
-    p.life--;
-  });
-  particles = particles.filter(p => p.life > 0);
-}
-
-function drawParticles() {
-  particles.forEach(p => {
-    ctx.fillStyle = p.color;
-    ctx.globalAlpha = p.life / 30;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  });
-}
-
-// ================= SKY =================
 function drawSky() {
   ctx.fillStyle = isDay ? "#87CEEB" : "#000022";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -262,13 +219,9 @@ function drawSky() {
   if (!isDay) {
     ctx.fillStyle = "white";
     stars.forEach(s => {
-      s.alpha += (Math.random() - 0.5) * s.twinkle;
-      s.alpha = Math.max(0.2, Math.min(1, s.alpha));
-      ctx.globalAlpha = s.alpha;
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = 1;
     });
   } else {
     clouds.forEach(cloud => {
@@ -312,91 +265,63 @@ function drawSunAndMoon() {
   }
 }
 
-// ================= COLLISIONS =================
 function checkCollisions() {
-  bullets.forEach((b, bi) => {
-    enemies.forEach((e, ei) => {
-      const dx = b.x - e.x;
-      const dy = b.y - e.y;
-      if (Math.hypot(dx, dy) < e.radius + 4) {
-        bullets.splice(bi, 1);
-        enemies.splice(ei, 1);
-        score++;
-        scoreText.textContent = `Score: ${score}`;
-        spawnExplosion(e.x, e.y, "orange");
+  try {
+    bullets.forEach((b, bi) => {
+      enemies.forEach((e, ei) => {
+        const dx = b.x - e.x;
+        const dy = b.y - e.y;
+        if (Math.hypot(dx, dy) < e.radius + 4) {
+          bullets.splice(bi, 1);
+          enemies.splice(ei, 1);
+          score++;
+          scoreText.textContent = `Score: ${score}`;
+        }
+      });
+    });
+
+    enemies.forEach((e, i) => {
+      const dx = e.x - plane.x;
+      const dy = e.y - plane.y;
+      if (Math.hypot(dx, dy) < e.radius + 32) {
+        enemies.splice(i, 1);
+        health -= 20;
+        if (health < 0) health = 0;
+        healthBar.style.width = `${health}%`;
+        if (health <= 0) endGame();
       }
     });
-  });
-
-  enemies.forEach((e, i) => {
-    const dx = e.x - plane.x;
-    const dy = e.y - plane.y;
-    if (Math.hypot(dx, dy) < e.radius + 32) {
-      enemies.splice(i, 1);
-      targetHealth -= 20;
-      if (targetHealth < 0) targetHealth = 0;
-      if (targetHealth <= 0) endGame();
-    }
-  });
-
-  powerUps.forEach((p, i) => {
-    const dx = p.x - plane.x;
-    const dy = p.y - plane.y;
-    if (Math.hypot(dx, dy) < 40) {
-      if (p.type === "health") {
-        targetHealth = Math.min(100, targetHealth + 30);
-      } else if (p.type === "rapid") {
-        canShoot = true;
-        reloading = false;
-        reloadText.style.display = "none";
-      }
-      powerUps.splice(i, 1);
-    }
-  });
+  } catch (error) {
+    console.error("Error checking collisions:", error);
+  }
 }
 
-// ================= GAME STATE =================
 function endGame() {
   gameOver = true;
-  finalScoreText.textContent = "Score: " + score;
-  gameOverScreen.classList.add("show");
+  gameOverScreen.style.display = "block";
 }
 
 function restartGame() {
   resetGame();
 }
 
-function updateHealthBar() {
-  health += (targetHealth - health) * 0.1;
-  healthBar.style.width = `${health}%`;
-
-  if (health <= 30) {
-    healthBar.classList.add("low");
-  } else {
-    healthBar.classList.remove("low");
-  }
-}
-
-// ================= LOOP =================
 function loop() {
-  drawSky();
-  if (!gameOver) {
-    updatePlane();
-    updateBullets();
-    updateEnemies();
-    updatePowerUps();
-    updateParticles();
-    checkCollisions();
-    updateHealthBar();
+  try {
+    drawSky();
+    if (!gameOver) {
+      updatePlane();
+      updateBullets();
+      updateEnemies();
+      checkCollisions();
+    }
+    drawPlane();
+    drawBullets();
+    drawEnemies();
+    requestAnimationFrame(loop);
+  } catch (error) {
+    console.error("Error in game loop:", error);
   }
-  drawPlane();
-  drawBullets();
-  drawEnemies();
-  drawPowerUps();
-  drawParticles();
-  requestAnimationFrame(loop);
 }
 
 setInterval(spawnEnemy, 3000);
-setInterval(spawnPowerUp, 10000);
 loop();
